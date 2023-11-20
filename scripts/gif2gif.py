@@ -22,14 +22,18 @@ def blend_images(images):
     return blended_img
 
 def file_to_list(file_path):
-    with Image.open(file_path) as im:
-        frames = []
-        try:
-            while True:
-                frames.append(im.copy())
-                im.seek(len(frames))
-        except EOFError:
-            pass
+    print(f'file_to_list file_path {file_path}')
+    try:
+        with Image.open(file_path) as im:
+            frames = []
+            try:
+                while True:
+                    frames.append(im.copy())
+                    im.seek(len(frames))
+            except EOFError:
+                pass
+    except Exception as e:
+        print(f'file_to_list failed with {e}')
     return frames
 
 class Script(scripts.Script):
@@ -130,6 +134,16 @@ class Script(scripts.Script):
     
      #Main run
     def run(self, p, cnet_targets, gif_resize, gif_clear_frames, gif_common_seed, frames_original, duration_original, upload_gif, gif_format, gif_blendbatch):
+        print(f'gif2gif running with {cnet_targets}, {gif_resize}, {gif_clear_frames}, {gif_common_seed}, {frames_original}, {duration_original}, {upload_gif}, {gif_format}, {gif_blendbatch}')
+        #Check if requested via api
+        upload_gif_name = ""
+        if isinstance(upload_gif, str):
+                init_gif = Image.open(upload_gif)
+                duration_original = init_gif.info["duration"]
+                frames_original = init_gif.n_frames
+                upload_gif_name = upload_gif
+        else:
+            upload_gif_name = upload_gif.name
         #Check for ControlNet
         cnet_present = False
         try:
@@ -141,7 +155,7 @@ class Script(scripts.Script):
             pass
         #Generate generation chunks (based on batch size) from input file
         try:
-            raw_frames = file_to_list(upload_gif.name)
+            raw_frames = file_to_list(upload_gif_name)
         except:
             print("Something went wrong with GIF. Processing still from img2img.")
             return None
